@@ -1,0 +1,5 @@
+environment_maps/*
+models/*
+*.pro.user
+build-*
+*.zip
