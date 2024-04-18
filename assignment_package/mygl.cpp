@@ -214,21 +214,37 @@ void MyGL::renderSceneToGBuffer() {
     //    - (Optionally) The environment-mapped PBR reflection (hw07's result)
     //    Refer to the FrameBuffer class to see
     //    what member function does this.
+    geometryBuffer.setDrawBuffers({
+        GBufferOutputType::POSITION_WORLD,
+        GBufferOutputType::NORMAL,
+        GBufferOutputType::ALBEDO,
+        GBufferOutputType::METAL_ROUGH_MASK,
+        GBufferOutputType::PBR
+    });
 
     // 2. Set progMeshToGBuffer's model-view-projection matrix
     //    and camera position uniforms
+    progMeshToGBuffer.setUnifMat4("u_MVP", camera.getViewProj() * glm::mat4(1.f));
+    progMeshToGBuffer.setUnifVec3("u_CamPos", camera.eye);
 
     // 3. Bind each of the material property texture maps
     //    (albedo, metallic, etc.) to their own texture slots
     //    and then set progMeshToGBuffer's sampler2Ds to read
     //    from the appropriate texture slots
+    textureAlbedo.bind(ALBEDO_TEX_SLOT);
+    progMeshToGBuffer.setUnifInt("u_AlbedoTexture", ALBEDO_TEX_SLOT);
+
+    textureMetallic.bind(METALLIC_TEX_SLOT);
+    progMeshToGBuffer.setUnifInt("u_MetallicTexture", METALLIC_TEX_SLOT);
+
+    textureRoughness.bind(ROUGHNESS_TEX_SLOT);
+    progMeshToGBuffer.setUnifInt("u_RoughnessTexture", ROUGHNESS_TEX_SLOT);
 
     // 4. If choosing to output PBR reflection into G-buffer,
     //    enable the #if 0 - #endif section below
 
     // 5. (Already given to you) Bind the G-buffer and render to it3
 
-#if 0
     // Set up the diffuse irradiance map on the GPU so our surface shader can read it
     diffuseIrradianceFB.bindToTextureSlot(DIFFUSE_IRRADIANCE_CUBE_TEX_SLOT, GBufferOutputType::NONE);
     progMeshToGBuffer.setUnifInt("u_DiffuseIrradianceMap", DIFFUSE_IRRADIANCE_CUBE_TEX_SLOT);
@@ -238,7 +254,6 @@ void MyGL::renderSceneToGBuffer() {
     // Also load our BRDF lookup texture for split-sum approximation
     textureBrdfLookup.bind(BRDF_LUT_TEX_SLOT);
     progMeshToGBuffer.setUnifInt("u_BRDFLookupTexture", BRDF_LUT_TEX_SLOT);
-#endif
 
     geometryBuffer.bindFrameBuffer();
     glViewport(0,0,

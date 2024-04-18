@@ -10,4 +10,6 @@ layout (location = 0) out vec4 out_Col;
 void main() {
     // TODO: Apply a Gaussian blur to the screen-space reflection
     // texture using the kernel stored in u_Kernel.
+
+    out_Col = texture(u_TextureSSR, fs_UV);
 }

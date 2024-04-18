@@ -22,6 +22,24 @@ out vec4 out_Col;
 
 const float PI = 3.14159f;
 
+// Schlick's fresnel approximation accounting for roughness
+vec3 fresnelRoughness(float cosViewAngle, vec3 R, float roughness)
+{
+    return R + (max(vec3(1.f - roughness), R) - R) * pow(max(1.f - cosViewAngle, 0.f), 5.f);
+}
+
+// Reinhard operator tone mapping
+vec3 reinhard(vec3 in_Col)
+{
+    return in_Col / (vec3(1.f) + in_Col);
+}
+
+// Gamma correction
+vec3 gammaCorrect(vec3 in_Col)
+{
+    return pow(in_Col, vec3(1.f / 2.2f));
+}
+
 vec3 computeLTE(vec3 pos, vec3 N,
                 vec3 albedo, float metallic, float roughness,
                 vec3 wo,
@@ -43,7 +61,34 @@ vec3 computeLTE(vec3 pos, vec3 N,
     // Everything else will be the same as in the code you
     // wrote for the previous assignment.
 
-    return vec3(0.);
+    vec3 R = mix(vec3(0.04f), albedo, metallic);
+    vec3 F = fresnelRoughness(max(dot(N, wo), 0.f), R, roughness);
+
+    // Cook-Torrence weights
+    vec3 ks = F;
+    vec3 kd = 1.f - ks;
+    kd *= 1.f - metallic;
+
+    // Diffuse color
+    vec3 diffuseIrradiance = mix(texture(u_DiffuseIrradianceMap, N).rgb, Li_Diffuse.rgb, Li_Diffuse.a);
+    vec3 diffuse = albedo * diffuseIrradiance;
+
+    // Sample the glossy irradiance map
+    vec3 wi = reflect(-wo, N);
+    const float MAX_REFLECTION_LOD = 4.f;
+    vec3 prefilteredColor = mix(textureLod(u_GlossyIrradianceMap, wi, roughness * MAX_REFLECTION_LOD).rgb, Li_Glossy.rgb, Li_Glossy.a);
+
+    // Specular color
+    vec2 envBRDF = texture(u_BRDFLookupTexture, vec2(max(dot(N, wo), 0.f), roughness)).rg;
+    vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+
+    // Ambient color
+    vec3 ambient = 0.03f * albedo;
+
+    // Cook-Torrence lighting
+    vec3 Lo = ambient + kd * diffuse + specular;
+
+    return Lo;
 }
 
 void main() {
@@ -63,4 +108,23 @@ void main() {
     // mix(u_TexSSR[0], u_TexSSR[1], fract(0.1 * 4))
     // If roughness were 0.9, then your color would be:
     // mix(u_TexSSR[2], u_TexSSR[3], fract(0.9 * 4))
+
+    vec3 pos = texture(u_TexPositionWorld, fs_UV).xyz;
+    vec3 N = texture(u_TexNormal, fs_UV).xyz;
+    vec3 albedo = texture(u_TexAlbedo, fs_UV).rgb;
+    float metallic = texture(u_TexMetalRoughMask, fs_UV).x;
+    float roughness = texture(u_TexMetalRoughMask, fs_UV).y;
+    vec3 wo = normalize(u_CamPos - pos);
+    vec4 Li_Diffuse = vec4(0.f);
+    vec4 Li_Glossy = vec4(0.f);
+
+    vec3 Lo = computeLTE(pos, N, albedo, metallic, roughness, wo, Li_Diffuse, Li_Glossy);
+
+    Lo = reinhard(Lo);
+    Lo = gammaCorrect(Lo);
+
+    out_Col = vec4(Lo, 1.f);
+
+    //out_Col = vec4(texture(u_TexSSR[0], fs_UV).rgb, 1.f);
+    out_Col = texture(u_TexSSR[0], fs_UV);
 }
