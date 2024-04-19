@@ -109,8 +109,10 @@ void main() {
     // If roughness were 0.9, then your color would be:
     // mix(u_TexSSR[2], u_TexSSR[3], fract(0.9 * 4))
 
-    vec3 pos = texture(u_TexPositionWorld, fs_UV).xyz;
     vec3 N = texture(u_TexNormal, fs_UV).xyz;
+    if (N == vec3(0.f)) return; // No object was hit
+
+    vec3 pos = texture(u_TexPositionWorld, fs_UV).xyz;
     vec3 albedo = texture(u_TexAlbedo, fs_UV).rgb;
     float metallic = texture(u_TexMetalRoughMask, fs_UV).x;
     float roughness = texture(u_TexMetalRoughMask, fs_UV).y;
@@ -118,13 +120,26 @@ void main() {
     vec4 Li_Diffuse = vec4(0.f);
     vec4 Li_Glossy = vec4(0.f);
 
+    // Compute the PBR light
     vec3 Lo = computeLTE(pos, N, albedo, metallic, roughness, wo, Li_Diffuse, Li_Glossy);
 
+    // Compute the screen space reflection specular roughness
+    float SSR_ind = roughness * 4;
+    int SSR_level = int(SSR_ind);
+    float SSR_mix = fract(SSR_ind);
+
+    vec4 SSR = mix(
+                texture(u_TexSSR[SSR_level], fs_UV),
+                texture(u_TexSSR[SSR_level + 1], fs_UV),
+                SSR_mix
+            );
+
+    // Add the screen space reflection contribution to the image
+    Lo = mix(Lo, SSR.rgb, SSR.a);
+
+    // Tone-mapping
     Lo = reinhard(Lo);
     Lo = gammaCorrect(Lo);
 
     out_Col = vec4(Lo, 1.f);
-
-    //out_Col = vec4(texture(u_TexSSR[0], fs_UV).rgb, 1.f);
-    out_Col = texture(u_TexSSR[0], fs_UV);
 }

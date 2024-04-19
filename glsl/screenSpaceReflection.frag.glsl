@@ -4,7 +4,7 @@
 #define maxDistance 20.f
 #define isectTolerance 0.5f
 #define startFade 15.f
-#define stepSize 0.1f
+#define stepSize 0.05f
 
 uniform samplerCube u_DiffuseIrradianceMap;
 uniform samplerCube u_GlossyIrradianceMap;

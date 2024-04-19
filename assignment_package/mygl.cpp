@@ -74,7 +74,37 @@ std::vector<GLfloat> MyGL::computeGaussianKernel(int radius) {
 
     //       Also remember to normalize your Gaussian kernel by dividing
     //       every element by the sum of all elements.
+    const float E = 2.71828f;
+    const float PI = 3.14159f;
 
+    float sum = 0.f;
+    // Find the un-normalized kernel
+    for (int y = -radius; y <= radius; ++y)
+    {
+        int y_ind = y + radius;
+
+        for (int x = -radius; x <= radius; ++x)
+        {
+            int x_ind = x + radius;
+
+            float kernelValue = powf(std::exp(E), -(x * x + y * y) / (2 * sigma2)) / (2 * PI * sigma2);
+            kernel[x_ind + y_ind * kernelWidth] = kernelValue;
+            sum += kernelValue;
+        }
+    }
+
+    // Normalize each cell of the kernel
+    for (int y = -radius; y <= radius; ++y)
+    {
+        int y_ind = y + radius;
+
+        for (int x = -radius; x <= radius; ++x)
+        {
+            int x_ind = x + radius;
+
+            kernel[x_ind + y_ind * kernelWidth] /= sum;
+        }
+    }
 
     return kernel;
 }
