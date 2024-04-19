@@ -3,6 +3,18 @@ Deferred Rendering and Screen-Space Reflection
 
 **University of Pennsylvania, CIS 561: Advanced Computer Graphics, Homework 8**
 
+Submission
+------------
+Kyle Bauer<br>kbau121
+
+![](output/specular_refl.png)
+
+![](output/gloss1.png)
+
+![](output/gloss4.png)
+
+![](output/final.png)
+
 Overview
 ------------
 Now that your approximated microfacet BRDF is capable of reflecting
