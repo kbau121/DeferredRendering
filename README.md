@@ -7,6 +7,8 @@ Submission
 ------------
 Kyle Bauer<br>kbau121
 
+Late day 2/3 used.
+
 ![](output/specular_refl.png)
 
 ![](output/gloss1.png)
