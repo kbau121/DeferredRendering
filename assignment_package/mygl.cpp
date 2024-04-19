@@ -87,7 +87,7 @@ std::vector<GLfloat> MyGL::computeGaussianKernel(int radius) {
         {
             int x_ind = x + radius;
 
-            float kernelValue = powf(std::exp(E), -(x * x + y * y) / (2 * sigma2)) / (2 * PI * sigma2);
+            float kernelValue = powf(E, -(x * x + y * y) / (2 * sigma2)) / (2 * PI * sigma2);
             kernel[x_ind + y_ind * kernelWidth] = kernelValue;
             sum += kernelValue;
         }

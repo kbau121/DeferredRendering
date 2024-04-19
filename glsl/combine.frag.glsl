@@ -108,7 +108,6 @@ void main() {
     // mix(u_TexSSR[0], u_TexSSR[1], fract(0.1 * 4))
     // If roughness were 0.9, then your color would be:
     // mix(u_TexSSR[2], u_TexSSR[3], fract(0.9 * 4))
-
     vec3 N = texture(u_TexNormal, fs_UV).xyz;
     if (N == vec3(0.f)) return; // No object was hit
 
